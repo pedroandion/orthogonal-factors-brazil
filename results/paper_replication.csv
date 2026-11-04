@@ -1,0 +1,18 @@
+,Paper,This repository
+Resemblance of RM,0.97,0.97
+Resemblance of SMB,0.96,0.96
+Resemblance of HML,0.92,0.91
+Resemblance of Mom,0.97,0.96
+Resemblance of Rev,0.91,0.91
+"Lowest pair resemblance, SW/L",0.94,0.94
+"Lowest pair resemblance, PCA",0.45,0.43
+"Lowest pair resemblance, GS",0.79,0.76
+Small EW portfolios: DR² RM (%),53.3,53.09
+Small EW portfolios: DR² SMB (%),24.68,24.18
+Small EW portfolios: 1 - R² (%),4.96,5.04
+Big EW portfolios: DR² RM (%),78.36,78.23
+Big EW portfolios: DR² SMB (%),3.92,3.93
+Big EW portfolios: 1 - R² (%),3.4,3.42
+"Rolling DR² RM, Small with Big Value",0.77,0.75
+"Rolling DR² Rev with RM, Small Value",-0.62,-0.63
+"Rolling DR² HML with RM, Big Value",-0.67,-0.55
