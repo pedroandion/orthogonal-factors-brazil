@@ -28,18 +28,18 @@ The replication uses the same factors (market, size, value, momentum and long-te
 
 ### The multi-factor strategy (`03_strategy_decomposition.ipynb`)
 
-The Combination holds up to 40 stocks: 20 from the Magic Formula and 10 each from LowVol Momentum and Quality. Share of the monthly variance of the returns in excess of the SELIC rate explained by each orthogonal factor, February 2010 to June 2026:
+The Combination holds up to 40 stocks: 20 from the Magic Formula and 10 each from LowVol Momentum and Quality. Share of the monthly variance of the returns in excess of the SELIC rate explained by each orthogonal factor, February 2010 to June 2026 (Quality holds stocks from February 2011):
 
 | Strategy | Market | SMB | HML | RMW | CMA | WML | BAB | Idiosyncratic |
 |---|---|---|---|---|---|---|---|---|
 | **Combination** | **70.0%** | **12.9%** | **0.3%** | **1.8%** | **0.2%** | **0.3%** | **0.6%** | **13.9%** |
 | Magic Formula | 63.1% | 14.2% | 0.0% | 1.6% | 0.5% | 0.8% | 1.1% | 18.7% |
 | LowVol Momentum | 63.0% | 6.6% | 0.3% | 1.2% | 0.0% | 4.6% | 1.7% | 22.6% |
-| Quality | 56.2% | 10.2% | 2.3% | 1.7% | 0.0% | 2.2% | 0.1% | 27.3% |
+| Quality | 58.8% | 10.5% | 1.9% | 1.6% | 0.0% | 2.0% | 0.1% | 25.1% |
 
 - **Sources.** The market explains most of the variance of every strategy, and size comes second. The other five factors together explain 3% to 8%, with momentum the largest of them for LowVol Momentum.
 - **Why orthogonalize.** Adding up the factor terms without the transformation overstates the systematic variance of the Combination by 27%, because the strategies have positive betas on factors that move against each other, such as the market and BAB. Gram-Schmidt, the usual alternative, depends on the order of the factors: across the 5,040 orders, the market explains anywhere from 47% to 75% of the Combination, and size from 2% to 25%.
-- **BAB construction.** With the dollar-neutral BAB of the companion, BAB seemed to be the third source of risk, with up to 10% of the variance of Quality. Most of that was market risk: with the beta-neutral BAB, its share is at most 1.7%, and the market's is 5 to 8 points higher.
+- **BAB construction.** With the dollar-neutral BAB of the companion, BAB seemed to be the third source of risk, with up to 11% of the variance of Quality. Most of that was market risk: with the beta-neutral BAB, its share is at most 1.7%, and the market's is 5 to 8 points higher.
 - **Alpha.** The alpha is the same with the original and the orthogonal factors: 0.23% a month for the Combination, with a Newey-West t-statistic of 1.5.
 
 ### Over time (`04_time_varying.ipynb`)
@@ -82,7 +82,7 @@ The functions are in the `orthofactors` package: the transformation in `orthogon
 ## Limitations
 
 - **Data vintage.** The Ken French files were built from the CRSP database of September 2026, and the library has revised its data since the paper, so the replication is close but not exact.
-- **Scale.** SW/L works on the covariance matrix, so rescaling a single factor changes the result. The correlation version, which does not, moves the shares of the strategies by at most 1.5 points.
+- **Scale.** SW/L works on the covariance matrix, so rescaling a single factor changes the result. The correlation version, which does not, moves the shares of the strategies by at most 1.7 points.
 - **Premia.** Each orthogonal factor mixes several original factors, so its mean return mixes their premia. The decomposition is of variance, not of returns.
 - **Local factors.** They come from single sorts with equal weights, and RMW uses gross profit over assets. BAB is beta-neutral only ex ante: ex post its beta on the market is −0.37, because the shrunk betas understate the spread between its legs. Results with other factor definitions may differ.
 - **Backtests.** The strategies are in-sample and before costs, as in the companion repository.

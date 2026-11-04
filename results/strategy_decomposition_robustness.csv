@@ -2,16 +2,16 @@
 Monthly,Combination,0.7005,0.1289,0.0031,0.0175,0.0017,0.0032,0.0064,0.1387
 Monthly,Magic Formula,0.6313,0.1419,0.0,0.0159,0.0047,0.0082,0.0115,0.1866
 Monthly,LowVol Momentum,0.6301,0.0659,0.0029,0.0118,0.0,0.0461,0.0174,0.2257
-Monthly,Quality,0.562,0.102,0.0232,0.0171,0.0004,0.022,0.0007,0.2726
+Monthly,Quality,0.5882,0.1052,0.0191,0.0155,0.0004,0.0198,0.0011,0.2507
 Daily,Combination,0.7898,0.0644,0.003,0.0078,0.0009,0.0035,0.0078,0.1228
 Daily,Magic Formula,0.7578,0.0597,0.0,0.0137,0.0018,0.006,0.011,0.15
 Daily,LowVol Momentum,0.667,0.0314,0.0004,0.0006,0.0008,0.0382,0.0168,0.2448
-Daily,Quality,0.5864,0.0752,0.0255,0.0064,0.0,0.0144,0.0001,0.2919
+Daily,Quality,0.6146,0.0777,0.0259,0.0055,0.0,0.012,0.0001,0.2642
 "Monthly, correlation version",Combination,0.6889,0.1419,0.0052,0.015,0.0026,0.0032,0.0045,0.1387
 "Monthly, correlation version",Magic Formula,0.6215,0.1538,0.0003,0.014,0.0065,0.0082,0.0091,0.1866
 "Monthly, correlation version",LowVol Momentum,0.6263,0.0733,0.0043,0.0102,0.0,0.0457,0.0146,0.2257
-"Monthly, correlation version",Quality,0.5466,0.1153,0.0287,0.0136,0.0005,0.0211,0.0017,0.2726
+"Monthly, correlation version",Quality,0.5715,0.1192,0.0245,0.0126,0.0006,0.0188,0.0021,0.2507
 "Monthly, dollar-neutral BAB",Combination,0.6325,0.1086,0.0001,0.0213,0.0015,0.0081,0.0635,0.1644
 "Monthly, dollar-neutral BAB",Magic Formula,0.5751,0.1227,0.0021,0.0196,0.0042,0.0152,0.0468,0.2143
 "Monthly, dollar-neutral BAB",LowVol Momentum,0.5829,0.0546,0.0001,0.0152,0.0001,0.0605,0.0318,0.2549
-"Monthly, dollar-neutral BAB",Quality,0.4868,0.0814,0.0119,0.0194,0.0004,0.014,0.1017,0.2843
+"Monthly, dollar-neutral BAB",Quality,0.5118,0.0819,0.0085,0.0169,0.0004,0.0123,0.1076,0.2606

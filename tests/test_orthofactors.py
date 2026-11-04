@@ -111,3 +111,13 @@ def test_variance_levels(data):
     assert table.loc["sum", "original"] != pytest.approx(table.loc["systematic", "original"], rel=1e-3)
     assert (table.loc["systematic"] + table.loc["idiosyncratic"]).values == pytest.approx(
         table.loc["total"].values, rel=1e-10)
+
+
+def test_monthly_returns_keep_missing_months_missing():
+    from orthofactors.data import to_monthly
+    days = pd.bdate_range("2020-01-01", "2020-03-31")
+    daily = pd.DataFrame({"a": 0.01, "b": np.nan}, index=days)
+    daily.loc["2020-02", "b"] = 0.01
+    monthly = to_monthly(daily)
+    assert monthly["b"].isna().tolist() == [True, False, True]
+    assert monthly.loc["2020-01", "a"].iloc[0] == pytest.approx(1.01 ** len(days[days.month == 1]) - 1)

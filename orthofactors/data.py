@@ -108,10 +108,17 @@ def load_brazil_factors(folder: str = "data", bab: str = "beta_neutral") -> pd.D
 
 
 def load_brazil_strategies(folder: str = "data") -> pd.DataFrame:
-    """Daily returns of the multi-factor strategy and its three sleeves in excess of the Risk_Free."""
+    """
+    Daily returns of the multi-factor strategy and its three sleeves in excess of the Risk_Free.
+
+    A strategy holds no stocks until its signals have enough history (Quality starts in
+    February 2011), and its return file holds zeros until then; those days are missing here.
+    """
     strategies = pd.read_csv(Path(folder) / "brazil_strategies.csv.gz", index_col="Date", parse_dates=True)
+    strategies = strategies[BRAZIL_STRATEGIES]
+    strategies = strategies.where(strategies.ne(0).cummax())
     risk_free = load_brazil_factors(folder)["Risk_Free"]
-    return strategies[BRAZIL_STRATEGIES].sub(risk_free, axis=0).dropna()
+    return strategies.sub(risk_free, axis=0).loc[risk_free.index]
 
 
 def load_brazil_screening(folder: str = "data") -> pd.DataFrame:
@@ -133,5 +140,8 @@ def load_brazil_stocks(folder: str = "data") -> tuple:
 
 
 def to_monthly(daily: pd.DataFrame) -> pd.DataFrame:
-    """Compound daily returns into monthly returns, as in 05_multi_factor_strategy of the companion."""
-    return daily.resample("ME").apply(lambda x: (x + 1).prod() - 1)
+    """
+    Compound daily returns into monthly returns, as in 05_multi_factor_strategy of the
+    companion. A month without any return is missing.
+    """
+    return daily.resample("ME").apply(lambda x: (x + 1).prod(min_count=1) - 1)
