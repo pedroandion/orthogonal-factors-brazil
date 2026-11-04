@@ -22,8 +22,8 @@ def orthogonalize_swl(F: pd.DataFrame) -> pd.DataFrame:
       3. Eigendecompose: M = O D O^T
       4. Symmetric whitening matrix: S = O D^{-1/2} O^T
       5. Orthogonalized demeaned factors: F̃⊥ = F̃ @ S
-      6. Restore means: F⊥ = F̃⊥ + mean(F)
-      7. Rescale so each F⊥_k has the same std as F_k
+      6. Rescale S so each F⊥_k has the same std as F_k (eq. 11)
+      7. Orthogonalized factors: F⊥ = F @ S (eq. 12), so the means become mean(F) @ S
 
     Parameters
     ----------
@@ -33,7 +33,9 @@ def orthogonalize_swl(F: pd.DataFrame) -> pd.DataFrame:
     Returns
     -------
     pd.DataFrame
-        T × K orthogonalized factors with original means and standard deviations.
+        T × K orthogonalized factors with the original standard deviations.
+        Their means are mean(F) @ S, which keeps the intercept of a regression
+        on F unchanged (Appendix A).
     """
     cols = F.columns.tolist()
     F_arr = F.values.copy().astype(float)
@@ -56,13 +58,13 @@ def orthogonalize_swl(F: pd.DataFrame) -> pd.DataFrame:
     # Step 5: orthogonalized demeaned factors
     F_tilde_ortho = F_tilde @ S  # shape (T, K)
 
-    # Step 6: restore means
-    F_ortho = F_tilde_ortho + mu
-
-    # Step 7: rescale so var(F⊥_k) == var(F_k)
+    # Step 6: rescale S so var(F⊥_k) == var(F_k)  (eq. 11)
     orig_stds = F_arr.std(axis=0, ddof=1)
-    ortho_stds = F_ortho.std(axis=0, ddof=1)
-    F_ortho = F_ortho * (orig_stds / ortho_stds)
+    ortho_stds = F_tilde_ortho.std(axis=0, ddof=1)
+    S = S * (orig_stds / ortho_stds)
+
+    # Step 7: F⊥ = F @ S  (eq. 12), so the means become mean(F) @ S
+    F_ortho = F_arr @ S
 
     return pd.DataFrame(F_ortho, index=F.index, columns=cols)
 
