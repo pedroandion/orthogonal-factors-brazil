@@ -3,6 +3,8 @@ orthogonalization.py — SW/L, PCA, and Gram-Schmidt orthogonalization
 of the Fama-French 5-factor set, following Klein & Chow (2013).
 """
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from numpy.linalg import eigh
@@ -13,7 +15,7 @@ from scipy.optimize import linear_sum_assignment
 # SW/L — Schweinler-Wigner / Löwdin symmetric orthogonalization
 # ---------------------------------------------------------------------------
 
-def orthogonalize_swl(F: pd.DataFrame) -> pd.DataFrame:
+def orthogonalize_swl(F: pd.DataFrame, return_matrices: bool = False):
     """
     Symmetric (Löwdin / Schweinler-Wigner) orthogonalization.
 
@@ -30,6 +32,8 @@ def orthogonalize_swl(F: pd.DataFrame) -> pd.DataFrame:
     ----------
     F : pd.DataFrame
         T × K matrix of factor returns.
+    return_matrices : bool
+        If True, also return S and Psi = S⁻¹.
 
     Returns
     -------
@@ -37,6 +41,9 @@ def orthogonalize_swl(F: pd.DataFrame) -> pd.DataFrame:
         T × K orthogonalized factors with the original standard deviations.
         Their means are mean(F) @ S, which keeps the intercept of a regression
         on F unchanged (Appendix A).
+    If return_matrices is True, the tuple (F⊥, S, Psi), where S and Psi are
+    K × K DataFrames. F = F⊥ @ Psi, so the betas on the orthogonalized factors
+    are Psi @ beta (footnote 19), and diag(Psi) is corr(F_k, F⊥_k).
     """
     cols = F.columns.tolist()
     F_arr = F.values.copy().astype(float)
@@ -48,6 +55,8 @@ def orthogonalize_swl(F: pd.DataFrame) -> pd.DataFrame:
 
     # Step 2: second-moment matrix M = F̃.T @ F̃  (= (T-1)*Cov)
     M = F_tilde.T @ F_tilde  # shape (K, K)
+    if np.linalg.cond(M) > 1e10:
+        warnings.warn("The factor covariance matrix is close to singular")
 
     # Step 3: eigen-decomposition (eigh for symmetric matrices)
     eigenvalues, O = eigh(M)  # eigenvalues ascending order
@@ -65,9 +74,13 @@ def orthogonalize_swl(F: pd.DataFrame) -> pd.DataFrame:
     S = S * (orig_stds / ortho_stds)
 
     # Step 7: F⊥ = F @ S  (eq. 12), so the means become mean(F) @ S
-    F_ortho = F_arr @ S
+    F_ortho = pd.DataFrame(F_arr @ S, index=F.index, columns=cols)
 
-    return pd.DataFrame(F_ortho, index=F.index, columns=cols)
+    if return_matrices:
+        S_df = pd.DataFrame(S, index=cols, columns=cols)
+        Psi_df = pd.DataFrame(np.linalg.inv(S), index=cols, columns=cols)
+        return F_ortho, S_df, Psi_df
+    return F_ortho
 
 
 # ---------------------------------------------------------------------------
