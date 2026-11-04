@@ -239,21 +239,27 @@ def rolling_window_regression(
     mag7_returns: pd.DataFrame,
     factors: pd.DataFrame,
     window_days: int = 252,
+    orthogonalize=None,
 ) -> pd.DataFrame:
     """
     Compute rolling OLS and Decomposed R² for each asset.
 
     For each window ending at date t, regress each asset's returns on the
-    given (orthogonalized) factors and compute DR²_k.
+    factors of the window, orthogonalized inside the window, and compute DR²_k.
+    Factors orthogonalized over the full sample are correlated again inside a
+    window, and then the DR²_k no longer add up to R².
 
     Parameters
     ----------
     mag7_returns : pd.DataFrame
         T × N asset returns.
     factors : pd.DataFrame
-        T × K orthogonalized factor returns.
+        T × K original factor returns.
     window_days : int
         Rolling window size in trading days.
+    orthogonalize : callable, optional
+        Function applied to the factors of each window, such as
+        orthogonalize_swl. If None, the factors are used as given.
 
     Returns
     -------
@@ -279,6 +285,8 @@ def rolling_window_regression(
         window_dates = common[start_idx:end_idx]
         y_win = Y.iloc[start_idx:end_idx]
         f_win = F.iloc[start_idx:end_idx]
+        if orthogonalize is not None:
+            f_win = orthogonalize(f_win)  # uncorrelated inside the window
         date_label = common[end_idx - 1]
 
         row = {}
