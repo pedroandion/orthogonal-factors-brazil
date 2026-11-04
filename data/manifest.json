@@ -1,0 +1,37 @@
+{
+  "companion": "https://github.com/pedroandion/brazil-equity-factors",
+  "companion_commit": "2e92006fa44449611520c42638488939333fa636",
+  "exported_on": "2026-11-04",
+  "files": {
+    "brazil_factors.csv.gz": {
+      "rows": 4408,
+      "columns": 8,
+      "first_date": "2009-01-02",
+      "last_date": "2026-07-23"
+    },
+    "brazil_strategies.csv.gz": {
+      "rows": 4408,
+      "columns": 4,
+      "first_date": "2009-01-02",
+      "last_date": "2026-07-23"
+    },
+    "brazil_screening_factors.csv.gz": {
+      "rows": 5664,
+      "columns": 32,
+      "first_date": "2004-01-02",
+      "last_date": "2026-07-23"
+    },
+    "brazil_stock_returns.csv.gz": {
+      "rows": 4157,
+      "columns": 392,
+      "first_date": "2010-01-05",
+      "last_date": "2026-07-23"
+    },
+    "brazil_stock_weights.csv.gz": {
+      "rows": 17,
+      "columns": 343,
+      "first_date": "2010-01-05",
+      "last_date": "2026-01-02"
+    }
+  }
+}
