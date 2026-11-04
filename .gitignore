@@ -1,0 +1,17 @@
+# Ken French data, downloaded by 01_paper_replication.ipynb
+data/external/
+
+# Credentials
+.env
+
+# Python and Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+.venv/
+
+# Local tools
+.claude/
+.vscode/
+.DS_Store
