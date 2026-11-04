@@ -72,6 +72,28 @@ year_starts = stock_returns.groupby(stock_returns.index.year).head(1).index
 stock_weights = (market_value * mask).loc[year_starts, stock_returns.columns].dropna(how = 'all', axis = 1)
 stock_weights.index.name = 'Date'
 stock_weights.to_csv('{out}/brazil_stock_weights.csv.gz', float_format = '%.8g')
+
+# The two legs of the BAB factor of 03 cell 10, the 30% lowest-beta and the 30% highest-beta stocks,
+# with the average Frazzini-Pedersen beta of each leg when it is formed (the bab signal is -beta).
+# The beta of a leg applies from the day after each rebalance, when the new weights start to earn.
+from brfactors.selection import get_longshort_decile
+from brfactors.backtest import backtest_quintiles
+rebalance_dates = [date(year, month, 1) for year in range(2009, 2027) for month in range(1, 13, 1)]
+rebalance_dates = [cal.following(ref_date) for ref_date in rebalance_dates if ref_date < date.today()]
+high_beta_sig, low_beta_sig = get_longshort_decile(0.3, bab * mask)
+legs = pd.DataFrame({{'Low_Beta': backtest_quintiles(prices_df, low_beta_sig, rebalance_dates, market_value),
+                     'High_Beta': backtest_quintiles(prices_df, high_beta_sig, rebalance_dates, market_value)}})
+leg_betas = {{}}
+for dt0 in map(pd.Timestamp, rebalance_dates):
+    position = prices_df.index.get_indexer([dt0])[0]
+    if position < 1 or position + 1 >= len(prices_df.index):
+        continue
+    dtm1, dt1 = prices_df.index[position - 1], prices_df.index[position + 1]
+    leg_betas[dt1] = {{'Low_Beta_Beta': -bab.loc[dtm1][low_beta_sig.loc[dtm1] == 1].mean(),
+                      'High_Beta_Beta': -bab.loc[dtm1][high_beta_sig.loc[dtm1] == 1].mean()}}
+legs = legs.join(pd.DataFrame(leg_betas).T.reindex(legs.index).ffill()).loc['2010-01-05':]
+legs.index.name = 'Date'
+legs.to_csv('{out}/brazil_bab_legs.csv.gz')
 """)
 
     # Long-short returns of the 32 screening factors, top 30% minus bottom 30%. Cells 17 and 19
@@ -96,8 +118,8 @@ strategy_returns.to_csv('{out}/brazil_strategies.csv.gz')
     if git(companion, "status", "--porcelain"):
         raise RuntimeError("The run changed files of the companion repository")
 
-    files = ["brazil_factors.csv.gz", "brazil_strategies.csv.gz", "brazil_screening_factors.csv.gz",
-             "brazil_stock_returns.csv.gz", "brazil_stock_weights.csv.gz"]
+    files = ["brazil_factors.csv.gz", "brazil_bab_legs.csv.gz", "brazil_strategies.csv.gz",
+             "brazil_screening_factors.csv.gz", "brazil_stock_returns.csv.gz", "brazil_stock_weights.csv.gz"]
     manifest = {"companion": "https://github.com/pedroandion/brazil-equity-factors",
                 "companion_commit": commit,
                 "exported_on": date.today().isoformat(),

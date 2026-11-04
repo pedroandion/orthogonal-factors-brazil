@@ -84,10 +84,27 @@ def read_ken_french(name: str, title: str = None, folder: str = "data/external")
 # Brazilian series exported from brazil-equity-factors
 # ---------------------------------------------------------------------------
 
-def load_brazil_factors(folder: str = "data") -> pd.DataFrame:
-    """Daily returns of the seven local factors and the Risk_Free (SELIC), from DAILY_START."""
+def load_brazil_factors(folder: str = "data", bab: str = "beta_neutral") -> pd.DataFrame:
+    """
+    Daily returns of the seven local factors and the Risk_Free (SELIC), from DAILY_START.
+
+    The BAB of the companion is dollar-neutral: long the 30% lowest-beta stocks and short
+    the 30% highest-beta ones, with a market beta of about -0.9. With bab='beta_neutral',
+    the default, each leg is scaled by the inverse of its ex-ante beta, as in Frazzini and
+    Pedersen (2014): BAB = (r_L - rf) / beta_L - (r_H - rf) / beta_H. With
+    bab='dollar_neutral', BAB is the series of the companion.
+    """
     factors = pd.read_csv(Path(folder) / "brazil_factors.csv.gz", index_col="Date", parse_dates=True)
-    return factors.loc[DAILY_START:]
+    factors = factors.loc[DAILY_START:]
+    if bab == "beta_neutral":
+        legs = pd.read_csv(Path(folder) / "brazil_bab_legs.csv.gz", index_col="Date", parse_dates=True)
+        legs = legs.reindex(factors.index)
+        risk_free = factors["Risk_Free"]
+        factors["BAB"] = ((legs["Low_Beta"] - risk_free) / legs["Low_Beta_Beta"]
+                          - (legs["High_Beta"] - risk_free) / legs["High_Beta_Beta"])
+    elif bab != "dollar_neutral":
+        raise ValueError("bab must be 'beta_neutral' or 'dollar_neutral'")
+    return factors
 
 
 def load_brazil_strategies(folder: str = "data") -> pd.DataFrame:

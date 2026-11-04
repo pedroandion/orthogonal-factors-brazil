@@ -9,6 +9,12 @@
       "first_date": "2009-01-02",
       "last_date": "2026-07-23"
     },
+    "brazil_bab_legs.csv.gz": {
+      "rows": 4157,
+      "columns": 4,
+      "first_date": "2010-01-05",
+      "last_date": "2026-07-23"
+    },
     "brazil_strategies.csv.gz": {
       "rows": 4408,
       "columns": 4,
