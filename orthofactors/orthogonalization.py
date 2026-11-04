@@ -6,6 +6,7 @@ of the Fama-French 5-factor set, following Klein & Chow (2013).
 import numpy as np
 import pandas as pd
 from numpy.linalg import eigh
+from scipy.optimize import linear_sum_assignment
 
 
 # ---------------------------------------------------------------------------
@@ -77,10 +78,10 @@ def orthogonalize_pca(F: pd.DataFrame) -> pd.DataFrame:
     """
     PCA-based orthogonalization.
 
-    Projects factors onto their principal components, then rescales each
-    PC to match the original factor's standard deviation.  The PC scores
-    are ordered to maximize correspondence with the original factor order
-    (each PC matched to the original factor it correlates most with).
+    Projects factors onto the principal components of their covariance
+    matrix, then rescales each PC to match the original factor's standard
+    deviation.  Each original factor is matched to one PC so that the total
+    absolute correlation of the matched pairs is the largest possible.
 
     Parameters
     ----------
@@ -95,7 +96,7 @@ def orthogonalize_pca(F: pd.DataFrame) -> pd.DataFrame:
     F_arr = F.values.copy().astype(float)
     T, K = F_arr.shape
 
-    # Standardize → PCA on correlation matrix equivalent
+    # PCA of the covariance matrix: the factors are only demeaned
     mu = F_arr.mean(axis=0)
     F_tilde = F_arr - mu
 
@@ -112,19 +113,11 @@ def orthogonalize_pca(F: pd.DataFrame) -> pd.DataFrame:
     # Correlation matrix between scores and original demeaned factors
     corr = (F_tilde.T @ scores) / ((T - 1) * np.outer(orig_stds, score_stds))
 
-    # Hungarian-style greedy matching
-    used_pcs = set()
-    order = []
-    signs = []
-    for k in range(K):
-        abs_corr_k = np.abs(corr[k, :])
-        # Mask already-used PCs
-        for j in used_pcs:
-            abs_corr_k[j] = -np.inf
-        best_pc = int(np.argmax(abs_corr_k))
-        used_pcs.add(best_pc)
-        order.append(best_pc)
-        signs.append(np.sign(corr[k, best_pc]))
+    # Match factors and PCs one to one, maximizing the total absolute
+    # correlation (Hungarian algorithm), so the result does not depend on
+    # the order of the factors
+    _, order = linear_sum_assignment(-np.abs(corr))
+    signs = np.sign(corr[np.arange(K), order])
 
     # Reorder and sign-flip PCs
     F_ortho = np.zeros_like(F_arr)
