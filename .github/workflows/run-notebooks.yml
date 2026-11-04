@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        notebook: [01_paper_replication, 02_brazil_factors, 03_strategy_decomposition, 04_time_varying, 05_screening_factors, 06_stock_cross_section]
+        notebook: [01_paper_replication, 02_brazil_factors, 03_strategy_decomposition, 04_time_varying, 05_screening_factors, 06_stock_cross_section, 07_factor_hedge]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

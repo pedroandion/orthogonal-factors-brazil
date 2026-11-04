@@ -2,7 +2,7 @@
 
 Decomposition of the systematic risk of Brazilian equity portfolios into seven local factors, with the orthogonalization of Klein and Chow (2013), from January 2010 to July 2026.
 
-Equity factors are correlated, so the systematic variance of a portfolio has cross terms and cannot be split by factor. Klein and Chow transform the factors into uncorrelated versions that stay as close as possible to the originals, and then the variance splits exactly into one share per factor. This repository first replicates the paper with US data, then applies the method to the seven local factors, the multi-factor strategy and the 32 screening factors of the companion repository, [brazil-equity-factors](https://github.com/pedroandion/brazil-equity-factors), and to each stock of its universe.
+Equity factors are correlated, so the systematic variance of a portfolio has cross terms and cannot be split by factor. Klein and Chow transform the factors into uncorrelated versions that stay as close as possible to the originals, and then the variance splits exactly into one share per factor. This repository first replicates the paper with US data, then applies the method to the seven local factors, the multi-factor strategy and the 32 screening factors of the companion repository, [brazil-equity-factors](https://github.com/pedroandion/brazil-equity-factors), and to each stock of its universe, and it uses the decomposition to hedge the factor exposures of the strategies.
 
 **Paper:** Klein, R. F. and Chow, V. K. (2013), *Orthogonalized factors and systematic risk decomposition*, The Quarterly Review of Economics and Finance 53, 175–187, [doi:10.1016/j.qref.2013.02.003](https://doi.org/10.1016/j.qref.2013.02.003).
 
@@ -57,6 +57,20 @@ The Combination holds up to 30 stocks, 10 from each of the Magic Formula, LowVol
 - For the average stock, the seven factors explain about a third of the daily variance: 24% from the market, 4% from size, 3% from momentum and 2% from BAB, with 63% idiosyncratic. In 2020 the share of the market rose to 50%.
 - The large banks are the most explained stocks, and exporters such as Suzano, Minerva, SLC Agrícola and Embraer the least, with 77% to 85% of their variance idiosyncratic.
 
+### Hedging the strategies (`07_factor_hedge.ipynb`)
+
+Each month the strategy is held and the factors are sold in proportion to its betas, estimated over the previous 36 months only. Combination, February 2013 to June 2026, total returns before costs; the SELIC rate earned 9.8% a year:
+
+| Hedge | Total return a year | Volatility | Sharpe ratio | Maximum drawdown | Correlation with the market |
+|---|---|---|---|---|---|
+| None | 13.0% | 19.5% | 0.25 | −36.3% | 0.87 |
+| Index only | 13.4% | 10.0% | 0.37 | −16.9% | 0.13 |
+| All seven factors | 10.1% | 8.3% | 0.07 | −20.0% | 0.04 |
+
+- **Index.** Selling the Ibovespa, 0.75 per real on average, halves the volatility and the drawdown of the Combination and raises its Sharpe ratio, also with 60-month windows from 2015. For the three sleeves it cuts the volatility by more than a third and keeps or raises the Sharpe ratio.
+- **All seven factors.** The full hedge leaves only 0.3 point a year above the SELIC rate: the excess return of the Combination came from its factor exposures, and the alpha of 0.34% a month measured over the whole sample does not survive when the betas come only from past data. With 60-month windows, from 2015, it leaves an excess return of 2.8% a year.
+- **Risk budget.** Out of sample, the hedges remove almost the share of the variance that the decomposition predicts: 82% for all seven factors, against an R² of 86% over the whole sample.
+
 ## Method
 
 - **Transformation.** With $\Sigma$ the sample covariance matrix of the factors and $\sigma$ their standard deviations, the orthogonal factors are $F^\perp = F S$ with $S = \Sigma^{-1/2}\,\mathrm{diag}(\sigma)$. They are uncorrelated, keep the variances of the original factors and do not depend on the order of the factors. The betas become $\beta^\perp = \Psi\beta$ with $\Psi = S^{-1}$, and the intercept, the residuals and the R² do not change.
@@ -76,6 +90,7 @@ The Combination holds up to 30 stocks, 10 from each of the Magic Formula, LowVol
 | `04_time_varying` | The decomposition in 60-month and 252-day windows | 44 s |
 | `05_screening_factors` | The 32 screening factors of the companion as test assets | 10 s |
 | `06_stock_cross_section` | Each stock of the investable universe, year by year | 15 s |
+| `07_factor_hedge` | Hedges the factor exposures of the strategies with betas from the previous 36 months | 11 s |
 
 The functions are in the `orthofactors` package: the transformation in `orthogonalization.py`, the regressions and decompositions in `decomposition.py`, the loaders in `data.py` and the chart settings in `plotting.py`. The tests in `tests/` check the properties shown in the paper on simulated data.
 
@@ -85,7 +100,7 @@ The functions are in the `orthofactors` package: the transformation in `orthogon
 - **Scale.** SW/L works on the covariance matrix, so rescaling a single factor changes the result. The correlation version, which does not, moves the shares of the strategies by at most 1.7 points.
 - **Premia.** Each orthogonal factor mixes several original factors, so its mean return mixes their premia. The decomposition is of variance, not of returns.
 - **Local factors.** They come from single sorts with equal weights, and RMW uses gross profit over assets. BAB is beta-neutral only ex ante: ex post its beta on the market is −0.37, because the shrunk betas understate the spread between its legs. Results with other factor definitions may differ.
-- **Backtests.** The strategies are in-sample and before costs, as in the companion repository.
+- **Backtests.** The strategies are in-sample and before costs, as in the companion repository. The hedges of `07_` are before costs too: the index can be sold cheaply with futures, but the factor hedges mean shorting baskets of stocks, and borrowing stocks in Brazil is expensive.
 - **Daily returns of small stocks.** Stocks that trade less often move with the factors with a lag, which inflates their idiosyncratic share in daily data.
 - **Multiple tests.** The 30 screening alphas are not adjusted for the number of tests, except where noted. Size and Momentum in the screening are the same series as SMB and WML and are left out of those tests.
 - **Not replicated.** The Monte Carlo of Table 2 and the GMM tests of Table 8 of the paper.
@@ -118,7 +133,7 @@ python -m pytest tests
 python -m nbconvert --to notebook --execute --inplace 03_strategy_decomposition.ipynb
 ```
 
-The notebooks read only the files in this repository, except `01_`, which downloads the Ken French data. The workflow in `.github/workflows/run-notebooks.yml` runs the tests and the six notebooks on a clean Linux machine. To rebuild the Brazilian data, clone the companion next to this repository, install its requirements and run `python scripts/export_companion_data.py ../brazil-equity-factors`.
+The notebooks read only the files in this repository, except `01_`, which downloads the Ken French data. The workflow in `.github/workflows/run-notebooks.yml` runs the tests and the seven notebooks on a clean Linux machine. To rebuild the Brazilian data, clone the companion next to this repository, install its requirements and run `python scripts/export_companion_data.py ../brazil-equity-factors`.
 
 ## License
 
