@@ -1,13 +1,17 @@
 ,,Mkt_RF,SMB,HML,RMW,CMA,WML,BAB,idiosyncratic
-Monthly,Combination,0.6325,0.1086,0.0001,0.0213,0.0015,0.0081,0.0635,0.1644
-Monthly,Magic Formula,0.5751,0.1227,0.0021,0.0196,0.0042,0.0152,0.0468,0.2143
-Monthly,LowVol Momentum,0.5829,0.0546,0.0001,0.0152,0.0001,0.0605,0.0318,0.2549
-Monthly,Quality,0.4868,0.0814,0.0119,0.0194,0.0004,0.014,0.1017,0.2843
-Daily,Combination,0.7328,0.0531,0.0002,0.0112,0.0011,0.0089,0.0537,0.1389
-Daily,Magic Formula,0.7094,0.0499,0.0011,0.0179,0.0021,0.0124,0.0418,0.1654
-Daily,LowVol Momentum,0.632,0.0255,0.0002,0.0016,0.001,0.0514,0.0252,0.263
-Daily,Quality,0.5245,0.0613,0.0148,0.0089,0.0,0.0072,0.0811,0.3024
-"Monthly, correlation version",Combination,0.6375,0.123,0.0008,0.0177,0.0025,0.0071,0.0469,0.1644
-"Monthly, correlation version",Magic Formula,0.5788,0.1356,0.0006,0.0169,0.0062,0.0139,0.0339,0.2143
-"Monthly, correlation version",LowVol Momentum,0.5889,0.0618,0.0005,0.0128,0.0,0.0581,0.0231,0.2549
-"Monthly, correlation version",Quality,0.4912,0.0975,0.0182,0.015,0.0006,0.0153,0.0779,0.2843
+Monthly,Combination,0.7005,0.1289,0.0031,0.0175,0.0017,0.0032,0.0064,0.1387
+Monthly,Magic Formula,0.6313,0.1419,0.0,0.0159,0.0047,0.0082,0.0115,0.1866
+Monthly,LowVol Momentum,0.6301,0.0659,0.0029,0.0118,0.0,0.0461,0.0174,0.2257
+Monthly,Quality,0.562,0.102,0.0232,0.0171,0.0004,0.022,0.0007,0.2726
+Daily,Combination,0.7898,0.0644,0.003,0.0078,0.0009,0.0035,0.0078,0.1228
+Daily,Magic Formula,0.7578,0.0597,0.0,0.0137,0.0018,0.006,0.011,0.15
+Daily,LowVol Momentum,0.667,0.0314,0.0004,0.0006,0.0008,0.0382,0.0168,0.2448
+Daily,Quality,0.5864,0.0752,0.0255,0.0064,0.0,0.0144,0.0001,0.2919
+"Monthly, correlation version",Combination,0.6889,0.1419,0.0052,0.015,0.0026,0.0032,0.0045,0.1387
+"Monthly, correlation version",Magic Formula,0.6215,0.1538,0.0003,0.014,0.0065,0.0082,0.0091,0.1866
+"Monthly, correlation version",LowVol Momentum,0.6263,0.0733,0.0043,0.0102,0.0,0.0457,0.0146,0.2257
+"Monthly, correlation version",Quality,0.5466,0.1153,0.0287,0.0136,0.0005,0.0211,0.0017,0.2726
+"Monthly, dollar-neutral BAB",Combination,0.6325,0.1086,0.0001,0.0213,0.0015,0.0081,0.0635,0.1644
+"Monthly, dollar-neutral BAB",Magic Formula,0.5751,0.1227,0.0021,0.0196,0.0042,0.0152,0.0468,0.2143
+"Monthly, dollar-neutral BAB",LowVol Momentum,0.5829,0.0546,0.0001,0.0152,0.0001,0.0605,0.0318,0.2549
+"Monthly, dollar-neutral BAB",Quality,0.4868,0.0814,0.0119,0.0194,0.0004,0.014,0.1017,0.2843
