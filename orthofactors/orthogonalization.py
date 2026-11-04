@@ -143,13 +143,13 @@ def orthogonalize_pca(F: pd.DataFrame) -> pd.DataFrame:
 # Gram-Schmidt orthogonalization
 # ---------------------------------------------------------------------------
 
-def orthogonalize_gs(F: pd.DataFrame, leader_col: str = "SMB") -> pd.DataFrame:
+def orthogonalize_gs(F: pd.DataFrame, order: list) -> pd.DataFrame:
     """
     Sequential Gram-Schmidt orthogonalization.
 
-    The `leader_col` factor is kept unchanged; subsequent factors are
-    residualized against all preceding factors.  The column order is:
-        [leader_col] + [remaining columns in original order]
+    The first factor of `order` is kept unchanged; each later factor is
+    residualized against all the factors before it in `order`. The result
+    depends on that order, which is why the paper prefers SW/L.
 
     After GS, each factor is rescaled to its original standard deviation
     and the original mean is restored.
@@ -157,19 +157,19 @@ def orthogonalize_gs(F: pd.DataFrame, leader_col: str = "SMB") -> pd.DataFrame:
     Parameters
     ----------
     F : pd.DataFrame
-    leader_col : str
-        Column to use as the first (unchanged) factor.
+    order : list
+        All the columns of F, in the order of the Gram-Schmidt steps.
 
     Returns
     -------
     pd.DataFrame
-        T × K orthogonalized factors, columns in the GS processing order.
+        T × K orthogonalized factors, in the original column order.
     """
     original_cols = F.columns.tolist()
 
-    # Reorder: leader first, then the rest in original order
-    remaining = [c for c in original_cols if c != leader_col]
-    gs_order = [leader_col] + remaining
+    if sorted(order) != sorted(original_cols):
+        raise ValueError("order must list each column of F once")
+    gs_order = list(order)
 
     F_arr = F[gs_order].values.copy().astype(float)
     T, K = F_arr.shape
@@ -287,7 +287,7 @@ def calculate_frobenius_norm(
 def compare_methods(F: pd.DataFrame) -> pd.DataFrame:
     """
     Apply SW/L, PCA, and GS orthogonalization to F and return a summary
-    comparison table.
+    comparison table. GS follows the column order of F.
 
     Returns
     -------
@@ -298,7 +298,7 @@ def compare_methods(F: pd.DataFrame) -> pd.DataFrame:
     methods = {
         "SW/L": orthogonalize_swl(F),
         "PCA": orthogonalize_pca(F),
-        "GS": orthogonalize_gs(F),
+        "GS": orthogonalize_gs(F, F.columns.tolist()),
     }
 
     rows = []
