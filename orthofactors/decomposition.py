@@ -38,7 +38,7 @@ def run_ols(
 
 
 def run_all_regressions(
-    mag7_returns: pd.DataFrame,
+    asset_returns: pd.DataFrame,
     factors_dict: dict,
 ) -> dict:
     """
@@ -46,8 +46,8 @@ def run_all_regressions(
 
     Parameters
     ----------
-    mag7_returns : pd.DataFrame
-        T × 7 DataFrame of Mag7 log-returns.
+    asset_returns : pd.DataFrame
+        T × N DataFrame of asset returns.
     factors_dict : dict
         {'original': df, 'swl': df, 'pca': df, 'gs': df}
 
@@ -56,10 +56,10 @@ def run_all_regressions(
     dict of dicts: {asset_ticker: {method_name: RegressionResultsWrapper}}
     """
     results = {}
-    for ticker in mag7_returns.columns:
+    for ticker in asset_returns.columns:
         results[ticker] = {}
         for method, factors in factors_dict.items():
-            results[ticker][method] = run_ols(mag7_returns[ticker], factors)
+            results[ticker][method] = run_ols(asset_returns[ticker], factors)
     return results
 
 
@@ -198,7 +198,7 @@ def validate_decomposition(
 def decompose_all(
     results: dict,
     factors_dict: dict,
-    mag7_returns: pd.DataFrame,
+    asset_returns: pd.DataFrame,
 ) -> dict:
     """
     Compute DR² for all assets and orthogonalization methods.
@@ -209,7 +209,7 @@ def decompose_all(
         Nested dict {ticker: {method: RegressionResultsWrapper}}.
     factors_dict : dict
         {'original': df, 'swl': df, 'pca': df, 'gs': df}
-    mag7_returns : pd.DataFrame
+    asset_returns : pd.DataFrame
 
     Returns
     -------
@@ -218,9 +218,9 @@ def decompose_all(
     ortho_methods = [m for m in factors_dict if m != "original"]
     decomposition = {}
 
-    for ticker in mag7_returns.columns:
+    for ticker in asset_returns.columns:
         decomposition[ticker] = {}
-        asset_std = mag7_returns[ticker].std(ddof=1)
+        asset_std = asset_returns[ticker].std(ddof=1)
         for method in ortho_methods:
             factors = factors_dict[method]
             factor_stds = factors.std(ddof=1)
@@ -236,7 +236,7 @@ def decompose_all(
 # ---------------------------------------------------------------------------
 
 def rolling_window_regression(
-    mag7_returns: pd.DataFrame,
+    asset_returns: pd.DataFrame,
     factors: pd.DataFrame,
     window_days: int = 252,
     orthogonalize=None,
@@ -251,7 +251,7 @@ def rolling_window_regression(
 
     Parameters
     ----------
-    mag7_returns : pd.DataFrame
+    asset_returns : pd.DataFrame
         T × N asset returns.
     factors : pd.DataFrame
         T × K original factor returns.
@@ -269,8 +269,8 @@ def rolling_window_regression(
         Values: DR²_k (contribution of each factor to total R²)
     """
     # Align
-    common = mag7_returns.index.intersection(factors.index)
-    Y = mag7_returns.loc[common]
+    common = asset_returns.index.intersection(factors.index)
+    Y = asset_returns.loc[common]
     F = factors.loc[common]
 
     T = len(common)

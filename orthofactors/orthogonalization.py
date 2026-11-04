@@ -1,6 +1,6 @@
 """
 orthogonalization.py — SW/L, PCA, and Gram-Schmidt orthogonalization
-of the Fama-French 5-factor set, following Klein & Chow (2013).
+of a set of factors, following Klein & Chow (2013).
 """
 
 import warnings
