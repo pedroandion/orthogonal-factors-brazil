@@ -1,0 +1,305 @@
+"""
+analysis.py — OLS regressions, Decomposed R², and rolling-window analysis
+following Klein & Chow (2013).
+"""
+
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+
+
+# ---------------------------------------------------------------------------
+# OLS regression helpers
+# ---------------------------------------------------------------------------
+
+def run_ols(
+    asset_returns: pd.Series,
+    factors: pd.DataFrame,
+) -> object:
+    """
+    Run OLS regression of asset_returns on factors (with intercept).
+
+    Parameters
+    ----------
+    asset_returns : pd.Series
+        Excess returns of one asset (or raw returns).
+    factors : pd.DataFrame
+        Factor returns (T × K).  An intercept is added automatically.
+
+    Returns
+    -------
+    statsmodels RegressionResultsWrapper
+    """
+    common = asset_returns.index.intersection(factors.index)
+    y = asset_returns.loc[common]
+    X = sm.add_constant(factors.loc[common], has_constant="add")
+    model = sm.OLS(y, X, missing="drop")
+    return model.fit()
+
+
+def run_all_regressions(
+    mag7_returns: pd.DataFrame,
+    factors_dict: dict,
+) -> dict:
+    """
+    Run OLS for every (asset, method) combination.
+
+    Parameters
+    ----------
+    mag7_returns : pd.DataFrame
+        T × 7 DataFrame of Mag7 log-returns.
+    factors_dict : dict
+        {'original': df, 'swl': df, 'pca': df, 'gs': df}
+
+    Returns
+    -------
+    dict of dicts: {asset_ticker: {method_name: RegressionResultsWrapper}}
+    """
+    results = {}
+    for ticker in mag7_returns.columns:
+        results[ticker] = {}
+        for method, factors in factors_dict.items():
+            results[ticker][method] = run_ols(mag7_returns[ticker], factors)
+    return results
+
+
+def extract_betas_table(results: dict) -> pd.DataFrame:
+    """
+    Build a MultiIndex DataFrame of betas (coefficient estimates).
+
+    Index   : (ticker, method)
+    Columns : factor names
+    """
+    rows = []
+    for ticker, method_results in results.items():
+        for method, res in method_results.items():
+            params = res.params.drop("const", errors="ignore")
+            row = params.to_dict()
+            row["ticker"] = ticker
+            row["method"] = method
+            rows.append(row)
+
+    df = pd.DataFrame(rows).set_index(["ticker", "method"])
+    return df
+
+
+def extract_r2_table(results: dict) -> pd.DataFrame:
+    """
+    Build a DataFrame of R² values.
+
+    Index   : ticker
+    Columns : method names
+    """
+    tickers = list(results.keys())
+    methods = list(next(iter(results.values())).keys())
+    data = {
+        method: [results[t][method].rsquared for t in tickers]
+        for method in methods
+    }
+    return pd.DataFrame(data, index=tickers)
+
+
+def extract_betas_with_tstats(results: dict) -> pd.DataFrame:
+    """
+    Build a detailed table: beta, t-stat, and significance stars for each
+    (ticker, method, factor) combination.
+    """
+    rows = []
+    for ticker, method_results in results.items():
+        for method, res in method_results.items():
+            params = res.params.drop("const", errors="ignore")
+            tvals = res.tvalues.drop("const", errors="ignore")
+            pvals = res.pvalues.drop("const", errors="ignore")
+            for factor in params.index:
+                stars = (
+                    "***" if pvals[factor] < 0.01 else
+                    "**" if pvals[factor] < 0.05 else
+                    "*" if pvals[factor] < 0.10 else ""
+                )
+                rows.append({
+                    "ticker": ticker,
+                    "method": method,
+                    "factor": factor,
+                    "beta": params[factor],
+                    "t_stat": tvals[factor],
+                    "p_value": pvals[factor],
+                    "stars": stars,
+                })
+    return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# Decomposed R² (DR²)
+# ---------------------------------------------------------------------------
+
+def calculate_decomposed_r2(
+    result,
+    factor_stds: pd.Series,
+    asset_std: float,
+) -> pd.Series:
+    """
+    Compute Decomposed R² for each factor.
+
+    DR²_k = (β̂⊥_k * σ̂_{fk} / σ̂_j)²
+
+    where β̂⊥_k is the OLS coefficient on factor k (from the orthogonalized
+    regression), σ̂_{fk} is the standard deviation of factor k, and σ̂_j is
+    the standard deviation of the asset's returns.
+
+    Parameters
+    ----------
+    result : RegressionResultsWrapper
+        OLS result from an orthogonalized regression.
+    factor_stds : pd.Series
+        Standard deviations of each factor (indexed by factor name).
+    asset_std : float
+        Standard deviation of the asset's returns.
+
+    Returns
+    -------
+    pd.Series
+        DR²_k for each factor.
+    """
+    betas = result.params.drop("const", errors="ignore")
+    # Align
+    common = betas.index.intersection(factor_stds.index)
+    betas = betas[common]
+    fstds = factor_stds[common]
+
+    dr2 = (betas * fstds / asset_std) ** 2
+    return dr2
+
+
+def validate_decomposition(
+    dr2: pd.Series,
+    r2: float,
+    tol: float = 1e-4,
+) -> dict:
+    """
+    Validate that DR² values sum to R² and that Σ DR²_k + (1-R²) = 1.
+
+    Returns
+    -------
+    dict with keys: 'sum_dr2', 'r2', 'error', 'passes', 'total_check'
+    """
+    sum_dr2 = dr2.sum()
+    error = abs(sum_dr2 - r2)
+    total = sum_dr2 + (1.0 - r2)
+    return {
+        "sum_dr2": sum_dr2,
+        "r2": r2,
+        "error_vs_r2": error,
+        "passes": error < tol,
+        "total": total,
+        "total_check": abs(total - 1.0) < tol,
+    }
+
+
+def decompose_all(
+    results: dict,
+    factors_dict: dict,
+    mag7_returns: pd.DataFrame,
+) -> dict:
+    """
+    Compute DR² for all assets and orthogonalization methods.
+
+    Parameters
+    ----------
+    results : dict
+        Nested dict {ticker: {method: RegressionResultsWrapper}}.
+    factors_dict : dict
+        {'original': df, 'swl': df, 'pca': df, 'gs': df}
+    mag7_returns : pd.DataFrame
+
+    Returns
+    -------
+    dict: {ticker: {method: pd.Series of DR²_k}}
+    """
+    ortho_methods = [m for m in factors_dict if m != "original"]
+    decomposition = {}
+
+    for ticker in mag7_returns.columns:
+        decomposition[ticker] = {}
+        asset_std = mag7_returns[ticker].std(ddof=1)
+        for method in ortho_methods:
+            factors = factors_dict[method]
+            factor_stds = factors.std(ddof=1)
+            res = results[ticker][method]
+            dr2 = calculate_decomposed_r2(res, factor_stds, asset_std)
+            decomposition[ticker][method] = dr2
+
+    return decomposition
+
+
+# ---------------------------------------------------------------------------
+# Rolling window analysis
+# ---------------------------------------------------------------------------
+
+def rolling_window_regression(
+    mag7_returns: pd.DataFrame,
+    factors: pd.DataFrame,
+    window_days: int = 252,
+) -> pd.DataFrame:
+    """
+    Compute rolling OLS and Decomposed R² for each asset.
+
+    For each window ending at date t, regress each asset's returns on the
+    given (orthogonalized) factors and compute DR²_k.
+
+    Parameters
+    ----------
+    mag7_returns : pd.DataFrame
+        T × N asset returns.
+    factors : pd.DataFrame
+        T × K orthogonalized factor returns.
+    window_days : int
+        Rolling window size in trading days.
+
+    Returns
+    -------
+    pd.DataFrame
+        MultiIndex columns: (ticker, factor_name)
+        Index: dates (starting from window_days-th observation onward)
+        Values: DR²_k (contribution of each factor to total R²)
+    """
+    # Align
+    common = mag7_returns.index.intersection(factors.index)
+    Y = mag7_returns.loc[common]
+    F = factors.loc[common]
+
+    T = len(common)
+    tickers = Y.columns.tolist()
+    factor_cols = F.columns.tolist()
+
+    # Results storage: date → {(ticker, factor): dr2_value}
+    records = {}
+
+    for end_idx in range(window_days, T + 1):
+        start_idx = end_idx - window_days
+        window_dates = common[start_idx:end_idx]
+        y_win = Y.iloc[start_idx:end_idx]
+        f_win = F.iloc[start_idx:end_idx]
+        date_label = common[end_idx - 1]
+
+        row = {}
+        for ticker in tickers:
+            asset_std = y_win[ticker].std(ddof=1)
+            try:
+                res = run_ols(y_win[ticker], f_win)
+                factor_stds = f_win.std(ddof=1)
+                dr2 = calculate_decomposed_r2(res, factor_stds, asset_std)
+                r2 = res.rsquared
+                for fc in factor_cols:
+                    row[(ticker, fc)] = dr2.get(fc, np.nan)
+                row[(ticker, "R2")] = r2
+                row[(ticker, "idiosyncratic")] = 1.0 - r2
+            except Exception:
+                for fc in factor_cols + ["R2", "idiosyncratic"]:
+                    row[(ticker, fc)] = np.nan
+
+        records[date_label] = row
+
+    df = pd.DataFrame(records).T
+    df.index.name = "Date"
+    df.columns = pd.MultiIndex.from_tuples(df.columns, names=["ticker", "component"])
+    return df
