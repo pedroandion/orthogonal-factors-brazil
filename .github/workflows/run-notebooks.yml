@@ -1,0 +1,37 @@
+# Runs the tests and the notebooks on a clean machine, using only the files in this repository.
+# 01_paper_replication downloads the Ken French data.
+name: Run notebooks
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt
+      - run: python -m pytest tests
+
+  run:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        notebook: [01_paper_replication, 02_brazil_factors, 03_strategy_decomposition, 04_time_varying, 05_screening_factors, 06_stock_cross_section]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt
+      - run: python -m nbconvert --to notebook --execute --ExecutePreprocessor.timeout=None --output-dir /tmp/executed ${{ matrix.notebook }}.ipynb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.notebook }}
+          path: /tmp/executed/
