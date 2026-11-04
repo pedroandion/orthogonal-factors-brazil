@@ -1,0 +1,13 @@
+,,Mkt_RF,SMB,HML,RMW,CMA,WML,BAB,idiosyncratic
+Monthly,Combination,0.6325,0.1086,0.0001,0.0213,0.0015,0.0081,0.0635,0.1644
+Monthly,Magic Formula,0.5751,0.1227,0.0021,0.0196,0.0042,0.0152,0.0468,0.2143
+Monthly,LowVol Momentum,0.5829,0.0546,0.0001,0.0152,0.0001,0.0605,0.0318,0.2549
+Monthly,Quality,0.4868,0.0814,0.0119,0.0194,0.0004,0.014,0.1017,0.2843
+Daily,Combination,0.7328,0.0531,0.0002,0.0112,0.0011,0.0089,0.0537,0.1389
+Daily,Magic Formula,0.7094,0.0499,0.0011,0.0179,0.0021,0.0124,0.0418,0.1654
+Daily,LowVol Momentum,0.632,0.0255,0.0002,0.0016,0.001,0.0514,0.0252,0.263
+Daily,Quality,0.5245,0.0613,0.0148,0.0089,0.0,0.0072,0.0811,0.3024
+"Monthly, correlation version",Combination,0.6375,0.123,0.0008,0.0177,0.0025,0.0071,0.0469,0.1644
+"Monthly, correlation version",Magic Formula,0.5788,0.1356,0.0006,0.0169,0.0062,0.0139,0.0339,0.2143
+"Monthly, correlation version",LowVol Momentum,0.5889,0.0618,0.0005,0.0128,0.0,0.0581,0.0231,0.2549
+"Monthly, correlation version",Quality,0.4912,0.0975,0.0182,0.015,0.0006,0.0153,0.0779,0.2843

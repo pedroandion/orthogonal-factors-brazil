@@ -8,6 +8,7 @@ with the table of its values.
 """
 
 import matplotlib as mpl
+import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.ticker import PercentFormatter
 
@@ -61,6 +62,36 @@ def plot_decomposition(ax, components, factors: list, title: str = None):
     ax.set_ylim(0, 1)
     ax.margins(x=0)
     ax.yaxis.set_major_formatter(PercentFormatter(1))
+    ax.grid(False)
+    ax.legend(loc="upper left", bbox_to_anchor=(1.0, 1.0))
+    if title:
+        ax.set_title(title)
+
+
+def plot_decomposition_bars(ax, table, factors: list, title: str = None, label_min: float = 0.03):
+    """
+    Horizontal stacked bars of the decomposed R² of each factor and of 1 - R².
+
+    table has one row per bar and the same columns as in plot_decomposition,
+    with values between 0 and 1. Segments of at least label_min are labeled.
+    """
+    colors = {**factor_colors(factors), "idiosyncratic": IDIOSYNCRATIC}
+    left = np.zeros(len(table))
+    for component in factors + ["idiosyncratic"]:
+        values = table[component].to_numpy(dtype=float)
+        label = "Idiosyncratic (1 - R²)" if component == "idiosyncratic" else component
+        ax.barh(range(len(table)), values, left=left, height=0.6, color=colors[component],
+                edgecolor="white", linewidth=1.5, label=label)
+        # White labels inside the fills, except on the yellow slot and the gray
+        ink = "#0b0b0b" if colors[component] in ("#eda100", IDIOSYNCRATIC) else "#ffffff"
+        for y, (x0, value) in enumerate(zip(left, values)):
+            if value >= label_min:
+                ax.text(x0 + value / 2, y, f"{value:.0%}", ha="center", va="center", color=ink, fontsize=11)
+        left += values
+    ax.set_yticks(range(len(table)), table.index)
+    ax.set_xlim(0, 1)
+    ax.xaxis.set_major_formatter(PercentFormatter(1))
+    ax.invert_yaxis()
     ax.grid(False)
     ax.legend(loc="upper left", bbox_to_anchor=(1.0, 1.0))
     if title:
