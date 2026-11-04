@@ -15,12 +15,15 @@ KEN_FRENCH_URL = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}
 VALUE_WEIGHTED = "Average Value Weighted Returns -- Monthly"
 EQUAL_WEIGHTED = "Average Equal Weighted Returns -- Monthly"
 
-# The seven local factors of brazil-equity-factors. BAB starts on 2010-01-05,
-# so the daily sample starts there and the monthly sample keeps full months.
+# The seven local factors of brazil-equity-factors. The data start on 2010-01-05,
+# when BAB starts. Quality, and so the full multi-factor strategy, holds stocks
+# only from February 2011, so the analyses start in January 2012. The earlier
+# data serve only estimates that need a past, such as the betas of the hedges.
 BRAZIL_FACTORS = ["Mkt_RF", "SMB", "HML", "RMW", "CMA", "WML", "BAB"]
 BRAZIL_STRATEGIES = ["Combination", "Magic Formula", "LowVol Momentum", "Quality"]
-DAILY_START = "2010-01-05"
-MONTHLY_SAMPLE = slice("2010-02", "2026-06")
+DATA_START = "2010-01-05"
+DAILY_START = "2012-01-02"
+MONTHLY_SAMPLE = slice("2012-01", "2026-06")
 
 
 # ---------------------------------------------------------------------------
@@ -84,9 +87,9 @@ def read_ken_french(name: str, title: str = None, folder: str = "data/external")
 # Brazilian series exported from brazil-equity-factors
 # ---------------------------------------------------------------------------
 
-def load_brazil_factors(folder: str = "data", bab: str = "beta_neutral") -> pd.DataFrame:
+def load_brazil_factors(folder: str = "data", bab: str = "beta_neutral", start: str = DAILY_START) -> pd.DataFrame:
     """
-    Daily returns of the seven local factors and the Risk_Free (SELIC), from DAILY_START.
+    Daily returns of the seven local factors and the Risk_Free (SELIC), from start.
 
     The BAB of the companion is dollar-neutral: long the 30% lowest-beta stocks and short
     the 30% highest-beta ones, with a market beta of about -0.9. With bab='beta_neutral',
@@ -95,7 +98,7 @@ def load_brazil_factors(folder: str = "data", bab: str = "beta_neutral") -> pd.D
     bab='dollar_neutral', BAB is the series of the companion.
     """
     factors = pd.read_csv(Path(folder) / "brazil_factors.csv.gz", index_col="Date", parse_dates=True)
-    factors = factors.loc[DAILY_START:]
+    factors = factors.loc[start:]
     if bab == "beta_neutral":
         legs = pd.read_csv(Path(folder) / "brazil_bab_legs.csv.gz", index_col="Date", parse_dates=True)
         legs = legs.reindex(factors.index)
@@ -107,9 +110,9 @@ def load_brazil_factors(folder: str = "data", bab: str = "beta_neutral") -> pd.D
     return factors
 
 
-def load_brazil_strategies(folder: str = "data") -> pd.DataFrame:
+def load_brazil_strategies(folder: str = "data", start: str = DAILY_START) -> pd.DataFrame:
     """
-    Daily returns of the multi-factor strategy and its three sleeves in excess of the Risk_Free.
+    Daily returns of the multi-factor strategy and its three sleeves in excess of the Risk_Free, from start.
 
     A strategy holds no stocks until its signals have enough history (Quality starts in
     February 2011), and its return file holds zeros until then; those days are missing here.
@@ -117,38 +120,39 @@ def load_brazil_strategies(folder: str = "data") -> pd.DataFrame:
     strategies = pd.read_csv(Path(folder) / "brazil_strategies.csv.gz", index_col="Date", parse_dates=True)
     strategies = strategies[BRAZIL_STRATEGIES]
     strategies = strategies.where(strategies.ne(0).cummax())
-    risk_free = load_brazil_factors(folder)["Risk_Free"]
+    risk_free = load_brazil_factors(folder, start=start)["Risk_Free"]
     return strategies.sub(risk_free, axis=0).loc[risk_free.index]
 
 
-def load_brazil_holdings(folder: str = "data") -> tuple:
+def load_brazil_holdings(folder: str = "data", start: str = DAILY_START) -> tuple:
     """
     Holdings of each strategy at each rebalance, with their weights, and the daily returns of
-    every held stock in excess of the Risk_Free, from DAILY_START. The weights of a rebalance
+    every held stock in excess of the Risk_Free, from start. The weights of a rebalance
     date earn returns from the next trading day.
     """
     holdings = pd.read_csv(Path(folder) / "brazil_strategy_holdings.csv.gz", parse_dates=["Date"])
     returns = pd.read_csv(Path(folder) / "brazil_held_stock_returns.csv.gz", index_col="Date", parse_dates=True)
-    risk_free = load_brazil_factors(folder)["Risk_Free"]
+    risk_free = load_brazil_factors(folder, start=start)["Risk_Free"]
     return holdings, returns.sub(risk_free, axis=0).loc[risk_free.index]
 
 
-def load_brazil_screening(folder: str = "data") -> pd.DataFrame:
-    """Daily long-short returns of the 32 screening factors, top 30% minus bottom 30%."""
+def load_brazil_screening(folder: str = "data", start: str = DAILY_START) -> pd.DataFrame:
+    """Daily long-short returns of the 32 screening factors, top 30% minus bottom 30%, from start."""
     screening = pd.read_csv(Path(folder) / "brazil_screening_factors.csv.gz", index_col="Date", parse_dates=True)
-    return screening.loc[DAILY_START:]
+    return screening.loc[start:]
 
 
-def load_brazil_stocks(folder: str = "data") -> tuple:
+def load_brazil_stocks(folder: str = "data", start: str = DAILY_START) -> tuple:
     """
     Daily returns of the stocks in excess of the Risk_Free, on the days they
     are in the investable universe, and their relative market value on the
-    first trading day of each year.
+    first trading day of each year, from start.
     """
     returns = pd.read_csv(Path(folder) / "brazil_stock_returns.csv.gz", index_col="Date", parse_dates=True)
     weights = pd.read_csv(Path(folder) / "brazil_stock_weights.csv.gz", index_col="Date", parse_dates=True)
-    risk_free = load_brazil_factors(folder)["Risk_Free"]
-    return returns.sub(risk_free.reindex(returns.index), axis=0), weights
+    risk_free = load_brazil_factors(folder, start=start)["Risk_Free"]
+    returns = returns.loc[start:]
+    return returns.sub(risk_free.reindex(returns.index), axis=0), weights.loc[start:]
 
 
 def to_monthly(daily: pd.DataFrame) -> pd.DataFrame:

@@ -1,29 +1,29 @@
 ,,Lowest,Highest,SW/L
-Combination,Mkt_RF,0.4789,0.7529,0.7022
-Combination,SMB,0.0179,0.2433,0.119
-Combination,HML,0.0,0.1144,0.0052
-Combination,RMW,0.0005,0.0616,0.0192
-Combination,CMA,0.0,0.0363,0.0012
-Combination,WML,0.0002,0.0673,0.0016
-Combination,BAB,0.0,0.0961,0.0063
-Magic Formula,Mkt_RF,0.3662,0.6519,0.58
-Magic Formula,SMB,0.0181,0.2194,0.1234
-Magic Formula,HML,0.0,0.1033,0.0
-Magic Formula,RMW,0.0018,0.0733,0.0193
-Magic Formula,CMA,0.0,0.0427,0.0053
-Magic Formula,WML,0.0002,0.0904,0.0051
-Magic Formula,BAB,0.0001,0.1315,0.0174
-LowVol Momentum,Mkt_RF,0.4351,0.7199,0.6301
-LowVol Momentum,SMB,0.0004,0.1712,0.0659
-LowVol Momentum,HML,0.0,0.0892,0.0029
-LowVol Momentum,RMW,0.0003,0.0492,0.0118
-LowVol Momentum,CMA,0.0,0.0199,0.0
-LowVol Momentum,WML,0.0008,0.1564,0.0461
-LowVol Momentum,BAB,0.0001,0.1254,0.0174
-Quality,Mkt_RF,0.4111,0.7036,0.5882
-Quality,SMB,0.0287,0.2831,0.1052
-Quality,HML,0.0,0.2242,0.0191
-Quality,RMW,0.0001,0.0642,0.0155
-Quality,CMA,0.0,0.0416,0.0004
-Quality,WML,0.0,0.1351,0.0198
-Quality,BAB,0.0001,0.0977,0.0011
+Combination,Mkt_RF,0.505,0.7731,0.7198
+Combination,SMB,0.0116,0.2526,0.1149
+Combination,HML,0.0,0.1497,0.0076
+Combination,RMW,0.0008,0.0587,0.0152
+Combination,CMA,0.0,0.0442,0.0014
+Combination,WML,0.0,0.0551,0.0005
+Combination,BAB,0.0,0.0819,0.0041
+Magic Formula,Mkt_RF,0.3884,0.656,0.5937
+Magic Formula,SMB,0.0107,0.2163,0.1182
+Magic Formula,HML,0.0,0.0904,0.0004
+Magic Formula,RMW,0.003,0.0605,0.0165
+Magic Formula,CMA,0.0,0.046,0.0041
+Magic Formula,WML,0.0,0.0754,0.0029
+Magic Formula,BAB,0.0004,0.1266,0.018
+LowVol Momentum,Mkt_RF,0.4688,0.7294,0.6534
+LowVol Momentum,SMB,0.0,0.1823,0.0676
+LowVol Momentum,HML,0.0,0.1107,0.0045
+LowVol Momentum,RMW,0.0001,0.0375,0.0071
+LowVol Momentum,CMA,0.0,0.028,0.0
+LowVol Momentum,WML,0.0,0.146,0.0447
+LowVol Momentum,BAB,0.0,0.1036,0.0127
+Quality,Mkt_RF,0.4077,0.7111,0.5888
+Quality,SMB,0.0268,0.2946,0.1068
+Quality,HML,0.0,0.2333,0.0189
+Quality,RMW,0.0,0.0702,0.0156
+Quality,CMA,0.0,0.048,0.0011
+Quality,WML,0.0,0.1454,0.0234
+Quality,BAB,0.0,0.1152,0.0019
