@@ -83,6 +83,32 @@ def orthogonalize_swl(F: pd.DataFrame, return_matrices: bool = False):
     return F_ortho
 
 
+def orthogonalize_swl_correlation(F: pd.DataFrame, return_matrices: bool = False):
+    """
+    SW/L orthogonalization of the correlation matrix.
+
+    The factors are divided by their standard deviations, orthogonalized with
+    orthogonalize_swl and multiplied back. Like the covariance version, the
+    result keeps the variances and the intercept; unlike it, the result does
+    not change when a single factor is rescaled, such as a levered BAB. The
+    paper uses the covariance matrix, so this variant is a robustness check.
+
+    Returns
+    -------
+    pd.DataFrame, or the tuple (F⊥, S, Psi) if return_matrices is True.
+    """
+    stds = F.std(ddof=1)
+    Z_ortho, S_z, _ = orthogonalize_swl(F / stds, return_matrices=True)
+    F_ortho = Z_ortho * stds
+
+    if return_matrices:
+        # F⊥ = F @ diag(1/σ) @ S_z @ diag(σ)
+        S = S_z.div(stds, axis=0).mul(stds, axis=1)
+        Psi = pd.DataFrame(np.linalg.inv(S), index=S.index, columns=S.columns)
+        return F_ortho, S, Psi
+    return F_ortho
+
+
 # ---------------------------------------------------------------------------
 # PCA orthogonalization
 # ---------------------------------------------------------------------------

@@ -1,11 +1,15 @@
 """
-analysis.py — OLS regressions, Decomposed R², and rolling-window analysis
+decomposition.py — OLS regressions, Decomposed R², and rolling-window analysis
 following Klein & Chow (2013).
 """
+
+from itertools import permutations
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+
+from .orthogonalization import orthogonalize_gs, orthogonalize_swl
 
 
 # ---------------------------------------------------------------------------
@@ -15,6 +19,7 @@ import statsmodels.api as sm
 def run_ols(
     asset_returns: pd.Series,
     factors: pd.DataFrame,
+    hac_lags: int = None,
 ) -> object:
     """
     Run OLS regression of asset_returns on factors (with intercept).
@@ -25,6 +30,8 @@ def run_ols(
         Excess returns of one asset (or raw returns).
     factors : pd.DataFrame
         Factor returns (T × K).  An intercept is added automatically.
+    hac_lags : int, optional
+        If given, Newey-West (HAC) standard errors with this many lags.
 
     Returns
     -------
@@ -34,7 +41,9 @@ def run_ols(
     y = asset_returns.loc[common]
     X = sm.add_constant(factors.loc[common], has_constant="add")
     model = sm.OLS(y, X, missing="drop")
-    return model.fit()
+    if hac_lags is None:
+        return model.fit()
+    return model.fit(cov_type="HAC", cov_kwds={"maxlags": hac_lags})
 
 
 def run_all_regressions(
@@ -311,3 +320,97 @@ def rolling_window_regression(
     df.index.name = "Date"
     df.columns = pd.MultiIndex.from_tuples(df.columns, names=["ticker", "component"])
     return df
+
+
+# ---------------------------------------------------------------------------
+# Decomposition on the regression sample
+# ---------------------------------------------------------------------------
+
+def align(asset_returns: pd.Series, factors: pd.DataFrame) -> tuple:
+    """Dates shared by one asset and the factors, without missing values."""
+    data = pd.concat([asset_returns.rename("__asset__"), factors], axis=1, join="inner").dropna()
+    return data["__asset__"].rename(asset_returns.name), data[factors.columns]
+
+
+def decompose(
+    asset_returns: pd.Series,
+    factors: pd.DataFrame,
+    orthogonalize=orthogonalize_swl,
+    hac_lags: int = None,
+) -> tuple:
+    """
+    Regress one asset on the orthogonalized factors and decompose its R² (eq. 17).
+
+    The factors are orthogonalized on the dates the asset and the factors
+    share, so they are uncorrelated on exactly the sample of the regression
+    and the DR²_k add up to R².
+
+    Parameters
+    ----------
+    asset_returns : pd.Series
+        Excess returns of one asset.
+    factors : pd.DataFrame
+        T × K original factor returns.
+    orthogonalize : callable
+        orthogonalize_swl by default, or another function of the same kind.
+    hac_lags : int, optional
+        Newey-West lags of the standard errors; None for the OLS ones.
+
+    Returns
+    -------
+    (RegressionResultsWrapper, pd.Series)
+        The regression on the orthogonalized factors, and DR²_k.
+    """
+    y, F = align(asset_returns, factors)
+    F_ortho = orthogonalize(F)
+    res = run_ols(y, F_ortho, hac_lags)
+    dr2 = calculate_decomposed_r2(res, F_ortho.std(ddof=1), y.std(ddof=1))
+    return res, dr2
+
+
+def variance_levels(asset_returns: pd.Series, factors: pd.DataFrame) -> pd.DataFrame:
+    """
+    Systematic variance of one asset by factor (Table 5).
+
+    With the SW/L factors the terms (β⊥_k σ_k)² add up to the systematic
+    variance, the total minus the idiosyncratic variance. With the original
+    factors the terms (β_k σ_k)² leave out the covariances, so their sum does
+    not.
+
+    Returns
+    -------
+    pd.DataFrame
+        Rows: one per factor, then 'sum', 'systematic', 'idiosyncratic' and
+        'total'. Columns: 'original' and 'orthogonal'.
+    """
+    y, F = align(asset_returns, factors)
+    F_ortho = orthogonalize_swl(F)
+    res = run_ols(y, F)
+    res_ortho = run_ols(y, F_ortho)
+    table = pd.DataFrame({
+        "original": (res.params.drop("const") * F.std(ddof=1)) ** 2,
+        "orthogonal": (res_ortho.params.drop("const") * F_ortho.std(ddof=1)) ** 2,
+    })
+    table.loc["sum"] = table.sum()
+    table.loc["systematic"] = y.var(ddof=1) - res.resid.var(ddof=1)
+    table.loc["idiosyncratic"] = res.resid.var(ddof=1)
+    table.loc["total"] = y.var(ddof=1)
+    return table
+
+
+def gs_order_range(asset_returns: pd.Series, factors: pd.DataFrame) -> pd.DataFrame:
+    """
+    DR²_k of one asset under every Gram-Schmidt order of the factors.
+
+    Returns
+    -------
+    pd.DataFrame
+        One row per order (K! rows), indexed by the order, with the DR²_k.
+    """
+    y, F = align(asset_returns, factors)
+    rows = {}
+    for order in permutations(F.columns):
+        F_gs = orthogonalize_gs(F, list(order))
+        # With uncorrelated factors, DR²_k is the squared correlation with factor k
+        rows[" > ".join(order)] = F_gs.corrwith(y) ** 2
+    return pd.DataFrame(rows).T
