@@ -121,6 +121,18 @@ def load_brazil_strategies(folder: str = "data") -> pd.DataFrame:
     return strategies.sub(risk_free, axis=0).loc[risk_free.index]
 
 
+def load_brazil_holdings(folder: str = "data") -> tuple:
+    """
+    Holdings of each strategy at each rebalance, with their weights, and the daily returns of
+    every held stock in excess of the Risk_Free, from DAILY_START. The weights of a rebalance
+    date earn returns from the next trading day.
+    """
+    holdings = pd.read_csv(Path(folder) / "brazil_strategy_holdings.csv.gz", parse_dates=["Date"])
+    returns = pd.read_csv(Path(folder) / "brazil_held_stock_returns.csv.gz", index_col="Date", parse_dates=True)
+    risk_free = load_brazil_factors(folder)["Risk_Free"]
+    return holdings, returns.sub(risk_free, axis=0).loc[risk_free.index]
+
+
 def load_brazil_screening(folder: str = "data") -> pd.DataFrame:
     """Daily long-short returns of the 32 screening factors, top 30% minus bottom 30%."""
     screening = pd.read_csv(Path(folder) / "brazil_screening_factors.csv.gz", index_col="Date", parse_dates=True)

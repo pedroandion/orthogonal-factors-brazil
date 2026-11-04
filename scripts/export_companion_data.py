@@ -113,12 +113,37 @@ screening_returns.to_csv('{out}/brazil_screening_factors.csv.gz')
 strategy_returns = consolidated_returns[['Magic Formula', 'LowVol Momentum', 'Quality', 'Combination']]
 strategy_returns.index.name = 'Date'
 strategy_returns.to_csv('{out}/brazil_strategies.csv.gz')
+
+# Holdings of each strategy at each rebalance: the stocks selected with the signal of the day before,
+# with the weights of the backtest (equal weights; in the Combination, proportional to the number of
+# sleeves that pick the stock). The new weights earn returns from the day after the rebalance.
+sleeves = {{'Magic Formula': long_mf, 'LowVol Momentum': long_momvol, 'Quality': long_quality,
+           'Combination': long_mf + long_momvol + long_quality}}
+rows = []
+for dt0 in map(pd.Timestamp, rebalance_dates):
+    position = prices_df.index.get_indexer([dt0])[0]
+    if position < 1:
+        continue
+    dtm1 = prices_df.index[position - 1]
+    for name, selection in sleeves.items():
+        held = selection.loc[dtm1]
+        held = held[held > 0]
+        for ticker, count in held.items():
+            rows.append({{'Date': dt0, 'Strategy': name, 'Ticker': ticker, 'Weight': count / held.sum()}})
+holdings = pd.DataFrame(rows)
+holdings.to_csv('{out}/brazil_strategy_holdings.csv.gz', index = False, float_format = '%.8g')
+
+# Daily returns of every stock the strategies ever hold, on all days, for the betas of the holdings
+held_returns = prices_df[sorted(holdings['Ticker'].unique())].pct_change(fill_method = None).loc['2010-01-05':]
+held_returns.index.name = 'Date'
+held_returns.to_csv('{out}/brazil_held_stock_returns.csv.gz', float_format = '%.8g')
 """)
 
     if git(companion, "status", "--porcelain"):
         raise RuntimeError("The run changed files of the companion repository")
 
     files = ["brazil_factors.csv.gz", "brazil_bab_legs.csv.gz", "brazil_strategies.csv.gz",
+             "brazil_strategy_holdings.csv.gz", "brazil_held_stock_returns.csv.gz",
              "brazil_screening_factors.csv.gz", "brazil_stock_returns.csv.gz", "brazil_stock_weights.csv.gz"]
     manifest = {"companion": "https://github.com/pedroandion/brazil-equity-factors",
                 "companion_commit": commit,

@@ -59,17 +59,18 @@ The Combination holds up to 30 stocks, 10 from each of the Magic Formula, LowVol
 
 ### Hedging the strategies (`07_factor_hedge.ipynb`)
 
-Each month the strategy is held and the factors are sold in proportion to its betas, estimated over the previous 36 months only. Combination, February 2013 to June 2026, total returns before costs; the SELIC rate earned 9.8% a year:
+At each monthly rebalance, the betas of the portfolio are the weighted average of the betas of the stocks it is about to hold, each from a regression of the stock's daily returns on the seven factors over the previous year. The hedge sells those betas of each factor per real in the portfolio and keeps the positions until the next rebalance. Combination, January 2012 to June 2026, total returns before costs; the SELIC rate earned 9.8% a year:
 
 | Hedge | Total return a year | Volatility | Sharpe ratio | Maximum drawdown | Correlation with the market |
 |---|---|---|---|---|---|
-| None | 13.0% | 19.5% | 0.25 | −36.3% | 0.87 |
-| Index only | 13.4% | 10.0% | 0.37 | −16.9% | 0.13 |
-| All seven factors | 10.1% | 8.3% | 0.07 | −20.0% | 0.04 |
+| None | 14.3% | 19.1% | 0.31 | −36.3% | 0.85 |
+| Index only | 14.6% | 9.7% | 0.50 | −11.2% | 0.19 |
+| All seven factors | 12.7% | 7.1% | 0.42 | −6.8% | 0.13 |
 
-- **Index.** Selling the Ibovespa, 0.75 per real on average, halves the volatility and the drawdown of the Combination and raises its Sharpe ratio, also with 60-month windows from 2015. For the three sleeves it cuts the volatility by more than a third and keeps or raises the Sharpe ratio.
-- **All seven factors.** The full hedge leaves only 0.3 point a year above the SELIC rate: the excess return of the Combination came from its factor exposures, and the alpha of 0.34% a month measured over the whole sample does not survive when the betas come only from past data. With 60-month windows, from 2015, it leaves an excess return of 2.8% a year.
-- **Risk budget.** Out of sample, the hedges remove almost the share of the variance that the decomposition predicts: 82% for all seven factors, against an R² of 86% over the whole sample.
+- **Index.** Selling the Ibovespa, 0.70 per real on average, halves the volatility of the Combination, cuts its maximum drawdown to −11% and raises its Sharpe ratio from 0.31 to 0.50, with a slightly higher total return. For the three sleeves it cuts the volatility by more than a third and raises the Sharpe ratio.
+- **All seven factors.** The full hedge keeps an excess return of 3.0% a year, half that of the unhedged Combination, with a volatility of 7.1%. So much of the alpha of 0.34% a month measured with hindsight in `03_` survives when the betas come only from past data. Quality is the exception, with 1.4% a year left.
+- **Holdings or past returns.** Betas from the strategy's own previous 36 monthly returns make a worse full hedge: on the months both cover, from February 2013, they leave the Combination a Sharpe ratio of 0.07, against 0.34 with the holdings, and remove 82% of its variance, against 87%.
+- **Risk budget.** Out of sample, the full hedge removes 86.1% of the monthly variance of the Combination, against an R² of 86.3% in sample over the same months.
 
 ## Method
 
@@ -90,7 +91,7 @@ Each month the strategy is held and the factors are sold in proportion to its be
 | `04_time_varying` | The decomposition in 60-month and 252-day windows | 44 s |
 | `05_screening_factors` | The 32 screening factors of the companion as test assets | 10 s |
 | `06_stock_cross_section` | Each stock of the investable universe, year by year | 15 s |
-| `07_factor_hedge` | Hedges the factor exposures of the strategies with betas from the previous 36 months | 11 s |
+| `07_factor_hedge` | Hedges the factor exposures of the strategies with the betas of their holdings at each rebalance | 18 s |
 
 The functions are in the `orthofactors` package: the transformation in `orthogonalization.py`, the regressions and decompositions in `decomposition.py`, the loaders in `data.py` and the chart settings in `plotting.py`. The tests in `tests/` check the properties shown in the paper on simulated data.
 
@@ -101,7 +102,7 @@ The functions are in the `orthofactors` package: the transformation in `orthogon
 - **Premia.** Each orthogonal factor mixes several original factors, so its mean return mixes their premia. The decomposition is of variance, not of returns.
 - **Local factors.** They come from single sorts with equal weights, and RMW uses gross profit over assets. BAB is beta-neutral only ex ante: ex post its beta on the market is −0.37, because the shrunk betas understate the spread between its legs. Results with other factor definitions may differ.
 - **Backtests.** The strategies are in-sample and before costs, as in the companion repository. The hedges of `07_` are before costs too: the index can be sold cheaply with futures, but the factor hedges mean shorting baskets of stocks, and borrowing stocks in Brazil is expensive.
-- **Daily returns of small stocks.** Stocks that trade less often move with the factors with a lag, which inflates their idiosyncratic share in daily data.
+- **Daily returns of small stocks.** Stocks that trade less often move with the factors with a lag, which inflates their idiosyncratic share in daily data. For the same reason the hedges of `07_`, which use daily betas, sell a little too little of the market: the holdings give the Combination a beta of 0.70 on the market alone, against 0.78 measured on its monthly returns.
 - **Multiple tests.** The 30 screening alphas are not adjusted for the number of tests, except where noted. Size and Momentum in the screening are the same series as SMB and WML and are left out of those tests.
 - **Not replicated.** The Monte Carlo of Table 2 and the GMM tests of Table 8 of the paper.
 
@@ -112,12 +113,14 @@ The functions are in the `orthofactors` package: the transformation in `orthogon
 | `data/brazil_factors.csv.gz` | Daily returns of the seven local factors, with the companion's BAB, and the SELIC rate | brazil-equity-factors, `03_historical_betas` |
 | `data/brazil_bab_legs.csv.gz` | Daily returns of the two legs of BAB and their ex-ante betas | brazil-equity-factors, `03_historical_betas` |
 | `data/brazil_strategies.csv.gz` | Daily returns of the multi-factor strategy and its sleeves | brazil-equity-factors, `05_multi_factor_strategy` |
+| `data/brazil_strategy_holdings.csv.gz` | Stocks held by each strategy at each monthly rebalance, with their weights | brazil-equity-factors, `05_multi_factor_strategy` |
+| `data/brazil_held_stock_returns.csv.gz` | Daily returns of every stock the strategies hold | brazil-equity-factors, `05_multi_factor_strategy` |
 | `data/brazil_screening_factors.csv.gz` | Daily long-short returns of the 32 screening factors | brazil-equity-factors, `04_factor_screening` |
 | `data/brazil_stock_returns.csv.gz` | Daily returns of each stock on the days it is in the investable universe | brazil-equity-factors, `03_historical_betas` |
 | `data/brazil_stock_weights.csv.gz` | Relative market value of each stock on the first trading day of each year | brazil-equity-factors |
 | `data/external/` | Factors and portfolios of the paper, downloaded by `01_` and not versioned | [Ken French data library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) |
 
-The companion repository builds the strategy and screening returns and the legs of BAB in memory only. `scripts/export_companion_data.py` runs its notebooks up to the cells that build them and saves them here, without changing the companion. `data/manifest.json` records the companion commit used, 39c2c67. The prices behind these series come from [Comdinheiro](https://www.comdinheiro.com.br/) through the companion; no raw financial statements or market values in R$ are in this repository.
+The companion repository builds the strategy and screening returns, the holdings of the strategies and the legs of BAB in memory only. `scripts/export_companion_data.py` runs its notebooks up to the cells that build them and saves them here, without changing the companion. `data/manifest.json` records the companion commit used, 39c2c67. The prices behind these series come from [Comdinheiro](https://www.comdinheiro.com.br/) through the companion; no raw financial statements or market values in R$ are in this repository.
 
 ## Running the notebooks
 

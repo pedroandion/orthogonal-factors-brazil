@@ -21,6 +21,18 @@
       "first_date": "2009-01-02",
       "last_date": "2026-07-23"
     },
+    "brazil_strategy_holdings.csv.gz": {
+      "rows": 11040,
+      "columns": 3,
+      "first_date": "2009-01-02",
+      "last_date": "2026-07-01"
+    },
+    "brazil_held_stock_returns.csv.gz": {
+      "rows": 4157,
+      "columns": 240,
+      "first_date": "2010-01-05",
+      "last_date": "2026-07-23"
+    },
     "brazil_screening_factors.csv.gz": {
       "rows": 5664,
       "columns": 32,
