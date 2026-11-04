@@ -28,24 +28,24 @@ The replication uses the same factors (market, size, value, momentum and long-te
 
 ### The multi-factor strategy (`03_strategy_decomposition.ipynb`)
 
-The Combination holds up to 40 stocks: 20 from the Magic Formula and 10 each from LowVol Momentum and Quality. Share of the monthly variance of the returns in excess of the SELIC rate explained by each orthogonal factor, February 2010 to June 2026 (Quality holds stocks from February 2011):
+The Combination holds up to 30 stocks, 10 from each of the Magic Formula, LowVol Momentum and Quality. Share of the monthly variance of the returns in excess of the SELIC rate explained by each orthogonal factor, February 2010 to June 2026 (Quality holds stocks from February 2011):
 
 | Strategy | Market | SMB | HML | RMW | CMA | WML | BAB | Idiosyncratic |
 |---|---|---|---|---|---|---|---|---|
-| **Combination** | **70.0%** | **12.9%** | **0.3%** | **1.8%** | **0.2%** | **0.3%** | **0.6%** | **13.9%** |
-| Magic Formula | 63.1% | 14.2% | 0.0% | 1.6% | 0.5% | 0.8% | 1.1% | 18.7% |
+| **Combination** | **70.2%** | **11.9%** | **0.5%** | **1.9%** | **0.1%** | **0.2%** | **0.6%** | **14.5%** |
+| Magic Formula | 58.0% | 12.3% | 0.0% | 1.9% | 0.5% | 0.5% | 1.7% | 24.9% |
 | LowVol Momentum | 63.0% | 6.6% | 0.3% | 1.2% | 0.0% | 4.6% | 1.7% | 22.6% |
 | Quality | 58.8% | 10.5% | 1.9% | 1.6% | 0.0% | 2.0% | 0.1% | 25.1% |
 
 - **Sources.** The market explains most of the variance of every strategy, and size comes second. The other five factors together explain 3% to 8%, with momentum the largest of them for LowVol Momentum.
-- **Why orthogonalize.** Adding up the factor terms without the transformation overstates the systematic variance of the Combination by 27%, because the strategies have positive betas on factors that move against each other, such as the market and BAB. Gram-Schmidt, the usual alternative, depends on the order of the factors: across the 5,040 orders, the market explains anywhere from 47% to 75% of the Combination, and size from 2% to 25%.
-- **BAB construction.** With the dollar-neutral BAB of the companion, BAB seemed to be the third source of risk, with up to 11% of the variance of Quality. Most of that was market risk: with the beta-neutral BAB, its share is at most 1.7%, and the market's is 5 to 8 points higher.
-- **Alpha.** The alpha is the same with the original and the orthogonal factors: 0.23% a month for the Combination, with a Newey-West t-statistic of 1.5.
+- **Why orthogonalize.** Adding up the factor terms without the transformation overstates the systematic variance of the Combination by 26%, because the strategies have positive betas on factors that move against each other, such as the market and BAB. Gram-Schmidt, the usual alternative, depends on the order of the factors: across the 5,040 orders, the market explains anywhere from 48% to 75% of the Combination, and size from 2% to 24%.
+- **BAB construction.** With the dollar-neutral BAB of the companion, BAB seemed to be the third source of risk, with up to 11% of the variance of Quality. Most of that was market risk: with the beta-neutral BAB, its share is at most 1.7%, and the market's is 4 to 8 points higher.
+- **Alpha.** The alpha is the same with the original and the orthogonal factors: 0.34% a month for the Combination, with a Newey-West t-statistic of 2.2, significant at 5% in this sample.
 
 ### Over time (`04_time_varying.ipynb`)
 
-- In 60-month windows, the market explains 61% to 78% of the variance of the Combination. The second source moved from BAB, with 10% in 2010–2015, to size, with 16% in 2021–2026.
-- In 252-day windows, size explained 21% in 2024, when the share of the market fell to 57%. The lowest idiosyncratic share, 3.5%, is in the window that ends during the COVID-19 crash.
+- In 60-month windows, the market explains 60% to 78% of the variance of the Combination. The second source moved from BAB, with 10% in 2010–2015, to size, with 13% in 2021–2026.
+- In 252-day windows, size explained 20% in 2024, when the share of the market fell to 56%. The lowest idiosyncratic share, 4.2%, is in the window that ends during the COVID-19 crash.
 
 ### The screening factors (`05_screening_factors.ipynb`)
 
@@ -102,7 +102,7 @@ The functions are in the `orthofactors` package: the transformation in `orthogon
 | `data/brazil_stock_weights.csv.gz` | Relative market value of each stock on the first trading day of each year | brazil-equity-factors |
 | `data/external/` | Factors and portfolios of the paper, downloaded by `01_` and not versioned | [Ken French data library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) |
 
-The companion repository builds the strategy and screening returns and the legs of BAB in memory only. `scripts/export_companion_data.py` runs its notebooks up to the cells that build them and saves them here, without changing the companion. `data/manifest.json` records the companion commit used, 2e92006. The prices behind these series come from [Comdinheiro](https://www.comdinheiro.com.br/) through the companion; no raw financial statements or market values in R$ are in this repository.
+The companion repository builds the strategy and screening returns and the legs of BAB in memory only. `scripts/export_companion_data.py` runs its notebooks up to the cells that build them and saves them here, without changing the companion. `data/manifest.json` records the companion commit used, 39c2c67. The prices behind these series come from [Comdinheiro](https://www.comdinheiro.com.br/) through the companion; no raw financial statements or market values in R$ are in this repository.
 
 ## Running the notebooks
 

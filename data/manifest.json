@@ -1,6 +1,6 @@
 {
   "companion": "https://github.com/pedroandion/brazil-equity-factors",
-  "companion_commit": "2e92006fa44449611520c42638488939333fa636",
+  "companion_commit": "39c2c67190f9fda7b7a09d111d43cc7d81a256e9",
   "exported_on": "2026-11-04",
   "files": {
     "brazil_factors.csv.gz": {
